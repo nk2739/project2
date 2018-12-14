@@ -36,7 +36,7 @@ def q2(client):
 # This function should return a list of source nodes and destination nodes in the graph.
 def q3(client):
 
-    q = """select twitter_username as src, REGEXP_EXTRACT(text, r'@([^\s]+)') as dst from [w4111-columbia.graph.tweets] \
+    q = """select twitter_username as src, REGEXP_EXTRACT(text, r'@([^\s]+)') as dst from `w4111-columbia.graph.tweets` \
         where REGEXP_EXTRACT(text, r'@([^\s]+)') is not null group by src,dst"""
 
     job = client.query(q)
@@ -46,8 +46,12 @@ def q3(client):
 # SQL query for Question 4. You must edit this funtion.
 # This function should return a list containing the twitter username of the users having the max indegree and max outdegree.
 def q4(client):
+    q = """ select * from (select dst as max_indegree from `dataset.GRAPH` group by dst order by COUNT(*) desc limit 1) as in_degrees, \
+        (select src as max_outdegree from `dataset.GRAPH` group by src order by COUNT(*) desc limit 1) as out_degrees"""
 
-    return []
+    job = client.query(q)
+    results = job.result()
+    return list(results)
 
 # SQL query for Question 5. You must edit this funtion.
 # This function should return a list containing value of the conditional probability.
