@@ -1,8 +1,8 @@
 import click
 from google.cloud import bigquery
 
-uni1 = '' # Your uni
-uni2 = '' # Partner's uni. If you don't have a partner, put None
+uni1 = 'nk2739' # Your uni
+uni2 = 'cr3014' # Partner's uni. If you don't have a partner, put None
 
 # Test function
 def testquery(client):
@@ -16,20 +16,32 @@ def testquery(client):
 # SQL query for Question 1. You must edit this funtion.
 # This function should return a list of IDs and the corresponding text.
 def q1(client):
+    q = """select id, text from `w4111-columbia.graph.tweets` where text like '%going live%' and text like '%www.twitch%'"""
 
-    return []
+    job = client.query(q)
+    results = job.result()
+    return list(results)
 
 # SQL query for Question 2. You must edit this funtion.
 # This function should return a list of days and their corresponding average likes.
 def q2(client):
+    q = """select SUBSTR(create_time,0,STRPOS(create_time,' ')-1) as day, avg(like_num) as avg_likes from `w4111-columbia.graph.tweets` \
+        group by day order by avg_likes desc limit 1"""
 
-    return []
+    job = client.query(q)
+    results = job.result()
+    return list(results)
 
 # SQL query for Question 3. You must edit this funtion.
 # This function should return a list of source nodes and destination nodes in the graph.
 def q3(client):
 
-    return []
+    q = """select twitter_username as src, REGEXP_EXTRACT(text, r'@([^\s]+)') as dst from [w4111-columbia.graph.tweets] \
+        where REGEXP_EXTRACT(text, r'@([^\s]+)') is not null group by src,dst"""
+
+    job = client.query(q)
+    results = job.result()
+    return list(results)
 
 # SQL query for Question 4. You must edit this funtion.
 # This function should return a list containing the twitter username of the users having the max indegree and max outdegree.
@@ -122,6 +134,30 @@ def bfs(client, start, n_iter):
         results = job.result()
         # print(results)
 
+def save_table_q3():
+    client = bigquery.Client()
+    dataset_id = 'dataset'
+
+    job_config = bigquery.QueryJobConfig()
+    # Set use_legacy_sql to True to use legacy SQL syntax.
+    job_config.use_legacy_sql = True
+    # Set the destination table
+    table_ref = client.dataset(dataset_id).table('GRAPH')
+    job_config.destination = table_ref
+    job_config.allow_large_results = True
+    sql = """select twitter_username as src, REGEXP_EXTRACT(text, r'@([^\s]+)') as dst from [w4111-columbia.graph.tweets] \
+        where REGEXP_EXTRACT(text, r'@([^\s]+)') is not null group by src,dst"""
+
+    # Start the query, passing in the extra configuration.
+    query_job = client.query(
+        sql,
+        # Location must match that of the dataset(s) referenced in the query
+        # and of the destination table.
+        location='US',
+        job_config=job_config)  # API request - starts the query
+
+    query_job.result()  # Waits for the query to finish
+    print('Query results loaded to table {}'.format(table_ref.path))
 
 # Do not edit this function. You can use this function to see how to store tables using BigQuery.
 def save_table():
@@ -154,11 +190,12 @@ def main(pathtocred):
     client = bigquery.Client.from_service_account_json(pathtocred)
 
     #funcs_to_test = [q1, q2, q3, q4, q5, q6, q7]
-    funcs_to_test = [testquery]
+    # funcs_to_test = [testquery, q1]
+    funcs_to_test = [q4]
     for func in funcs_to_test:
         rows = func(client)
         print ("\n====%s====" % func.__name__)
-        print(rows)
+        print(rows) 
 
     #bfs(client, 'A', 5)
 
