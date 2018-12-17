@@ -23,7 +23,7 @@ def testquery(client):
 def q1(client):
     q = """
         SELECT id, text FROM `w4111-columbia.graph.tweets` 
-        WHERE text LIKE '%going live%' AND text LIKE '%www.twitch%'
+        WHERE LOWER(text) LIKE '%going live%' AND LOWER(text) LIKE '%www.twitch%'
         """
 
     job = client.query(q)
@@ -288,7 +288,7 @@ def main(pathtocred):
     client = bigquery.Client.from_service_account_json(pathtocred)
 
     funcs_to_test = [q1, q2, q3, q4, q5, q6, q7]
-    # funcs_to_test = [q5]
+    # funcs_to_test = [q7]
     for func in funcs_to_test:
         rows = func(client)
         print("\n====%s====" % func.__name__)
